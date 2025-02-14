@@ -6,12 +6,21 @@ import matplotlib.pyplot as plt
 sys.executable
 
 sales_df = pd.read_csv("/home/linuxand/jupyter_notebooks/ML_procol/datasets/supervised_l/advertising_and_sales_clean.csv")
-
 y = sales_df.iloc[:,-1].values
-X_tv = sales_df.iloc[:, 0].values.reshape((-1,1))
-X_radio = sales_df.iloc[:, 1].values.reshape((-1,1))
-X_social_media = sales_df.iloc[:, 2].values.reshape((-1,1))
-X_influencer = sales_df.iloc[:, 3].values.reshape((-1,1))
+
+def media_to_np(media):
+    
+    X_tv = sales_df.iloc[:, 0].values.reshape((-1,1))
+    X_radio = sales_df.iloc[:, 1].values.reshape((-1,1))
+    X_social_media = sales_df.iloc[:, 2].values.reshape((-1,1))
+    X_influencer = sales_df.iloc[:, 3].values.reshape((-1,1))
+
+    dict_of_media = {"TV": X_tv,
+                    "Radio": X_radio,
+                    "Social Media": X_social_media,
+                    "Influencers": X_influencer}
+
+    return dict_of_media[media]
 
 def stack_dependent_variables(a_py_list):
     list_to_return = np.concatenate(a_py_list, axis=1)
@@ -30,29 +39,31 @@ def model_creation(X, y, test_percentage):
     X_for_y_predicted = np.arange(X.min(), X.max(), step=100).reshape(-1, 1)
     y_predicted = reg.predict(X_for_y_predicted)
     
-    return y_predicted, accuracy
+    return X_for_y_predicted, y_predicted, accuracy
     
      
 if __name__ == "__main__":
-      
-    sources = [X_social_media, X_radio]
+    sources_to_be_evaluated = ["Social Media", "Radio"]
+    sources = [media_to_np(x) for x in sources_to_be_evaluated]
+              
+    fig, axs = plt.subplots(1, len(sources), figsize=(8, 4))
+    counter = 0
+    
     for ad_source in sources:
         X = stack_dependent_variables([ad_source])
-        y_predicted, accuracy  = model_creation(X, y, 0.3)        
+        X_for_y_predicted, y_predicted, accuracy  = model_creation(X, y, 0.3)        
 
-        y_predicted
         
-    fig, axs = plt.subplots(1,2, figsize=(8,4))
+        axs[counter].scatter(ad_source.flatten(), y, alpha=0.1)
+        axs[counter].plot(X_for_y_predicted.flatten(), y_predicted, color="red")
+        axs[counter].set_title(f"Influence of {sources_to_be_evaluated[counter]} \n Ads over Sales")
+        axs[counter].text(ad_source.max() * .5, 50000, f"R^2= {accuracy:.2f}")
+               
+             
+        counter += 1
     
-    for fig_row in range(0, len(sources)):
-        axs[0, fig_row].plot()
-    
-    accuracy
-    y_predicted
-    
-    plt.title("Convertion of TV Ads into Revenue")
-    plt.scatter(X.reshape((-1)), y, alpha=0.1)
-    
-    plt.legend()
+    plt.tight_layout()
     plt.show()
-    
+      
+
+
